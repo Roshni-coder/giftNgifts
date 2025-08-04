@@ -76,27 +76,7 @@ function OrderSummery() {
       image: cartItems[0]?.product.image || "",
     };
   };
-
-  const handlePlaceOrder = async () => {
-    if (!cartItems.length) return alert("Cart is empty.");
-
-    let orderData;
-    try {
-      orderData = buildOrderPayload();
-    } catch {
-      return;
-    }
-    console.log("o",orderData)
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/client/place-order`, orderData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.data.success) navigate("/order-success");
-      else alert("Order failed.");
-    } catch (error) {
-      alert("Error placing order.");
-    }
-  };
+  
 
   const checkoutHandler = async () => {
     const totalAmount = cartItems.reduce(
@@ -172,12 +152,7 @@ function OrderSummery() {
                 ))}
                 <Divider />
                 <div className="flex  justify-end gap-3 m-4">
-                  <Button
-                    onClick={handlePlaceOrder}
-                    className="w-[50%] md:w-[30%] !text-white pt-2  !bg-[#fb541b] !rounded-none !h-[45px]"
-                  >
-                    Cash On Delivery
-                  </Button>
+                  
                   <Button
                     onClick={checkoutHandler}
                     className="w-[50%] md:w-[30%] !text-white pt-2 !bg-[#ff9f00] !rounded-none !h-[45px]"
