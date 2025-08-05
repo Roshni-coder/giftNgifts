@@ -1,6 +1,6 @@
 import express from "express"
 import authseller from "../middleware/authseller.js"
-import { addproducts, getSeller, getSellerDashboardStats, getSellerOrders, getSellerProfile, loginseller, registerseller, updateSellerProfile, userlist } from "../controller/sellercontroller.js";
+import { addproducts, getSeller, getSellerDashboardStats, getSellerOrders, getSellerProfile, loginseller, registerseller, updateSellerOrderStatus, updateSellerProfile, userlist } from "../controller/sellercontroller.js";
 import upload from "../middleware/multer.js";
 
 const sellerrouter=express.Router();
@@ -16,4 +16,5 @@ sellerrouter.get("/sellerdetails",authseller,getSeller);
 // Define GET /api/seller/orders route
 sellerrouter.get("/orders",authseller, getSellerOrders);
 sellerrouter.get('/dashboard-stats', authseller, getSellerDashboardStats);
+sellerrouter.put("/orders/:orderId", authseller, updateSellerOrderStatus);
 export default sellerrouter;

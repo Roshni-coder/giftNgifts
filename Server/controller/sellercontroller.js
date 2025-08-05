@@ -318,3 +318,40 @@ export const getSellerDashboardStats = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch dashboard stats' });
   }
 };
+
+// controllers/sellerController.js
+
+export const updateSellerOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+    const sellerId = req.sellerId || req.body.sellerId; // From token or body
+
+    // Find order containing this seller
+    const order = await orderModel.findOne({ 
+      _id: orderId, 
+      "items.sellerId": sellerId 
+    });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found for this seller" });
+    }
+
+    // Update only relevant items for this seller
+    order.items.forEach((item) => {
+      if (item.sellerId.toString() === sellerId.toString()) {
+        item.status = status; // Optional per-item status
+      }
+    });
+
+    // Optionally set global order status
+    order.status = status;
+
+    await order.save();
+
+    return res.json({ success: true, message: "Order status updated", order });
+  } catch (error) {
+    console.error("Update status error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
-import Badges from "../../Components/DashbordBoxes/Badges.jsx";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 function OrdersList() {
   const [isOpenOrderdProduct, setOpenOrderdProduct] = useState(null);
@@ -16,6 +16,7 @@ function OrdersList() {
 
   const getOrders = async () => {
     try {
+      setLoading(true);
       const { data } = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/seller/orders`,
         { headers: { stoken } }
@@ -23,15 +24,41 @@ function OrdersList() {
 
       if (data.success) {
         setOrders(data.filteredOrders || []);
+        setError(null);
       } else {
         setOrders([]);
-        setError("Failed to fetch orders.");
+        setError(data.message || "Failed to fetch orders.");
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
       setError("Error fetching orders.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const { data } = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/seller/orders/${orderId}`,
+        { status: newStatus },
+        { headers: { stoken } }
+      );
+
+      if (data.success) {
+        toast.success("Order status updated successfully!");
+        // Update status in local state
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order._id === orderId ? { ...order, status: newStatus } : order
+          )
+        );
+      } else {
+        toast.error(data.message || "Failed to update status");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Error updating order status");
     }
   };
 
@@ -44,7 +71,7 @@ function OrdersList() {
   }
 
   if (error || orders.length === 0) {
-    return <div className="p-4 text-red-500">No orders found.</div>;
+    return <div className="p-4 text-red-500">{error || "No orders found."}</div>;
   }
 
   return (
@@ -73,7 +100,7 @@ function OrdersList() {
           <tbody>
             {orders.map((order, index) => (
               <React.Fragment key={order._id}>
-                <tr className="bg-white  hover:bg-gray-50 transition text-center border-b">
+                <tr className="bg-white hover:bg-gray-50 transition text-center border-b">
                   <td className="py-4 px-4">
                     <button onClick={() => toggleOrderDetails(index)}>
                       {isOpenOrderdProduct === index ? (
@@ -84,19 +111,33 @@ function OrdersList() {
                     </button>
                   </td>
                   <td className="py-3 px-4 text-left">{order._id}</td>
-                  <td className="py-3 px-4 text-left whitespace-nowrap overflow-hidden text-ellipsis">
-                    {order.shippingAddress?.name}
-                  </td>
+                  <td className="py-3 px-4 text-left">{order.shippingAddress?.name}</td>
                   <td className="py-3 px-4">{order.shippingAddress?.phone}</td>
-                  <td className="py-3 px-4 text-left truncate max-w-[250px] whitespace-nowrap overflow-hidden text-ellipsis">{order.shippingAddress?.address}</td>
+                  <td className="py-3 px-4 text-left truncate max-w-[250px]">
+                    {order.shippingAddress?.address}
+                  </td>
                   <td className="py-3 px-4">{order.shippingAddress?.pin}</td>
-                  <td className="py-3 px-4 font-semibold text-green-700">₹{order.totalAmount}</td>
-                  <td className="py-3 px-4 whitespace-nowrap overflow-hidden text-ellipsis">{order.user?.name || "-"}</td>
+                  <td className="py-3 px-4 font-semibold text-green-700">
+                    ₹{order.totalAmount}
+                  </td>
+                  <td className="py-3 px-4">{order.user?.name || "-"}</td>
                   <td className="py-3 px-4">{order.paymentId || "-"}</td>
                   <td className="py-3 px-4">
-                    <Badges status={order.status} />
+                    <select
+                      value={order.status}
+                      onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                      className="border rounded-md px-2 py-1 text-sm focus:outline-none"
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Processing">Processing</option>
+                      <option value="Shipped">Shipped</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
                   </td>
-                  <td className="py-3 px-4">{new Date(order.placedAt).toLocaleDateString()}</td>
+                  <td className="py-3 px-4">
+                    {new Date(order.placedAt).toLocaleDateString()}
+                  </td>
                 </tr>
 
                 {isOpenOrderdProduct === index && (
@@ -117,7 +158,9 @@ function OrdersList() {
                           <tbody>
                             {order.items.map((item) => (
                               <tr key={item._id} className="text-center border-t">
-                                <td className="py-2 px-4 text-left">{item.productId?._id || item.productId}</td>
+                                <td className="py-2 px-4 text-left">
+                                  {item.productId?._id || item.productId}
+                                </td>
                                 <td className="py-2 px-4">
                                   {item.productId?.images?.[0]?.url ? (
                                     <img
