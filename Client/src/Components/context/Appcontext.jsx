@@ -9,23 +9,25 @@ axios.defaults.withCredentials = true;
 export const AppContextProvider = (props) => {
   const navigate = useNavigate();
   const backendurl = import.meta.env.VITE_BACKEND_URL || "http://localhost:7000";
+
   const [isLoggedin, setIsLoggedin] = useState(false);
   const [userData, setUserdata] = useState(false);
-
-  // New profile state for detailed user profile info
+  const [profile, setProfile] = useState({ name: '', phone: '', email: '' });
 
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
 
   const token = localStorage.getItem('token') || null;
-  const [profile, setProfile] = useState({ name: '', phone: '', email: '' });
 
-  // Fetch detailed profile info (name, phone, email)
+  // Helper: Axios headers
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
+  // Fetch detailed profile info
   const fetchProfile = async () => {
-    if (!token) return; // No token, no fetch
+    if (!token) return;
     try {
       const { data } = await axios.get(`${backendurl}/api/user/profile`, {
-        headers: { token },
+        headers: authHeader,
       });
       if (data.success && data.profile) {
         setProfile(data.profile);
@@ -35,25 +37,31 @@ export const AppContextProvider = (props) => {
     }
   };
 
-  // Fetch basic user data (like userData)
+  // Fetch basic user data
   const getuserData = async () => {
+    if (!token) return;
     try {
-      const { data } = await axios.get(`${backendurl}/api/user/data`);
+      const { data } = await axios.get(`${backendurl}/api/user/data`, {
+        headers: authHeader,
+      });
       if (data.success) {
         setUserdata(data.userData);
-        // Fetch profile info after userData load
         fetchProfile();
       } else {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
+  // Check if user is authenticated
   const getAuthstate = async () => {
+    if (!token) return;
     try {
-      const { data } = await axios.get(`${backendurl}/api/auth/is-auth`);
+      const { data } = await axios.get(`${backendurl}/api/auth/is-auth`, {
+        headers: authHeader,
+      });
       if (data.success) {
         setIsLoggedin(true);
         getuserData();
@@ -61,53 +69,61 @@ export const AppContextProvider = (props) => {
         fetchWishlist();
       }
     } catch (error) {
-      toast.error(error.message);
+      console.error("Auth state check failed:", error);
     }
   };
 
-    
+  // Fetch Cart
   const fetchCart = async () => {
     if (!token) return;
     try {
-      const res = await axios.get(`${backendurl}/api/auth/Cart`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await axios.get(`${backendurl}/api/auth/cart`, {
+        headers: authHeader,
       });
-      setCartItems(res.data.cart);
+      setCartItems(res.data.cart || []);
     } catch (err) {
       console.error("Error fetching cart:", err);
     }
   };
 
+  // Clear cart after order
   const clearCartAfterOrder = async () => {
-    setCartItems([]); // Clear from UI
+    if (!token) return;
+    setCartItems([]);
     try {
       await axios.delete(`${backendurl}/api/auth/clear-cart`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: authHeader,
       });
-      await fetchCart(); // Refresh to reflect updated backend cart (empty)
+      await fetchCart();
     } catch (err) {
       console.error("Error clearing backend cart:", err);
     }
   };
-   const fetchWishlist = async () => {
+
+  // Fetch Wishlist
+  const fetchWishlist = async () => {
     if (!token) return;
     try {
       const res = await axios.get(`${backendurl}/api/auth/wishlist`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: authHeader,
       });
-      setWishlistItems(res.data.wishlist);
+      setWishlistItems(res.data.wishlist || []);
     } catch (err) {
       console.error("Error fetching wishlist:", err);
     }
   };
 
+  // Logout
   const logout = async () => {
     try {
-      const { data } = await axios.post(`${backendurl}/api/auth/logout`);
+      const { data } = await axios.post(`${backendurl}/api/auth/logout`, {}, {
+        headers: authHeader,
+      });
       if (data.success) {
+        localStorage.removeItem("token");
         setIsLoggedin(false);
         setUserdata(false);
-        setProfile({ name: '', phone: '', email: '' }); // clear profile on logout
+        setProfile({ name: '', phone: '', email: '' });
         setCartItems([]);
         setWishlistItems([]);
         navigate('/');
@@ -127,21 +143,22 @@ export const AppContextProvider = (props) => {
     setIsLoggedin,
     userData,
     setUserdata,
-    profile,         // expose profile state
+    profile,
     setProfile,
-    fetchProfile,    // expose fetchProfile for manual refresh if needed
+    fetchProfile,
     logout,
     cartItems,
     setCartItems,
     wishlistItems,
     setWishlistItems,
     fetchCart,
-    fetchWishlist,clearCartAfterOrder
+    fetchWishlist,
+    clearCartAfterOrder
   };
 
   return (
     <AppContext.Provider value={value}>
       {props.children}
     </AppContext.Provider>
-  );
+  );
 };
