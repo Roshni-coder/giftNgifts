@@ -25,7 +25,6 @@ import ShippingInfo from "./Components/Home/Footer/Shippinginfo.jsx";
 import OrderTracking from "./Components/Home/Header/TopStrip/OrderTracking.jsx";
 import HelpCenter from "./Components/Home/Header/TopStrip/HelpCenter.jsx";
 import ContactUs from './Components/Home/Header/TopStrip/ContactUs.jsx'
-import ChatBot from "./Components/ChatBot/ChatBot.jsx";
 import TermsOfUse from "./Components/Home/Footer/TermOfUSe.jsx";
 import FAQs from './Components/Home/Footer/FAQs.jsx';
 import Desclaimer from './Components/Home/Footer/Desclaimer.jsx'
@@ -68,7 +67,6 @@ function App() {
          <Route path="/refund-policy" element={<RefundPlicy/>} />
          <Route path="*" element={<ErrorPage />} />
       </Routes>
-      <ChatBot />
       <Footer />
     </>
   );

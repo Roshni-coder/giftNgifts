@@ -4,7 +4,6 @@ import "swiper/css";
 import "swiper/css/navigation";
 import { Autoplay } from "swiper/modules";
 import { Link } from "react-router-dom";
-import ChatBot from "../../ChatBot/ChatBot.jsx";
 import axios from "axios";
 
 const NavCatSlider = () => {
@@ -66,7 +65,6 @@ const NavCatSlider = () => {
           ))}
         </Swiper>
       </div>
-      <ChatBot />
     </div>
   );
 };
