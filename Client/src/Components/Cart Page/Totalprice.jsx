@@ -1,7 +1,6 @@
 import React, { useContext } from 'react';
 import { Divider } from "@mui/material";
-import { HiShoppingBag } from "react-icons/hi2";
-import { AppContext } from '../Context/AppContext.jsx';
+import { AppContext } from '../context/Appcontext.jsx';
 
 function Totalprice({ handlePlaceOrder }) {
   const { cartItems: contextCartItems } = useContext(AppContext);

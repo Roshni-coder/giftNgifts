@@ -7,8 +7,6 @@ import ProductSlider from '../Home/ProductSlider/Productslider.jsx'
 import MiddelAds from '../Home/Advertise/MiddelAds.jsx'
 import RelationSlider from './RelationshipSlider/RelationSlider.jsx'
 
-
-
 function Home() {
   return (
     <>
